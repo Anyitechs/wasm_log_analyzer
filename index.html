@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASM Log Extractor</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #007BFF;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        label {
+            font-size: 16px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebAssembly Log Extractor</h1>
+
+        <label for="logInput">Enter a log message (Format: [timestamp] [severity] [message])</label>
+        <input type="text" id="logInput" placeholder="e.g., 2024-11-22 INFO System started" />
+        <button id="extractButton">Extract Log</button>
+
+        <h3>Extracted Log:</h3>
+        <pre id="extractedLog"></pre>
+
+        <p class="error" id="errorMessage"></p>
+
+        <p class="loading" id="loadingIndicator" style="display:none;">Loading WASM module...</p>
+    </div>
+
+    <script type="module">
+        import init, { extract_log } from "./pkg/wasm_log_extractor.js";
+
+        document.getElementById("loadingIndicator").style.display = "block";
+
+        init().then(() => {
+            console.log("WASM module loaded.");
+            document.getElementById("loadingIndicator").style.display = "none";
+
+            document.getElementById("extractButton").addEventListener("click", () => {
+                const logMessage = document.getElementById("logInput").value;
+
+                const extractedLog = extract_log(logMessage);
+
+                if (typeof extractedLog === "object" && extractedLog !== null) {
+                    const logObj = extractedLog;
+
+                    if (logObj.timestamp) {
+                        document.getElementById("extractedLog").innerText = `
+                            Timestamp: ${logObj.timestamp}
+                            Severity: ${logObj.severity}
+                            Message: ${logObj.message}
+                        `;
+                        document.getElementById("errorMessage").innerText = "";
+                    } else {
+                        document.getElementById("extractedLog").innerText = "";
+                        document.getElementById("extractedMessage").innerText = "Error: Invalid log format returned."
+                    }
+                } else {
+                    document.getElementById("extractedLog").innerText = "";
+                    document.getElementById("extractedMessage").innerText = extractedLog;
+                }
+            });
+        }).catch((err) => {
+            console.error("Enter loading WASM:", err);
+            document.getElementById("loadingIndicator").innerText = "Failed to load WASM module.";
+        });
+    </script>
+</body>
+</html>
